@@ -1,0 +1,1 @@
+# The purpose of this repository is to show my stage of learning Typescript
