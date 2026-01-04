@@ -15,15 +15,11 @@ export async function saveToJson(
   try {
     const absolutePath = resolve(process.cwd(), filePath);
 
-    if (options.createDir) {
-      await mkdir(dirname(absolutePath), { recursive: true });
-    }
+    if (options.createDir)await mkdir(dirname(absolutePath), { recursive: true });
 
     const jsonString = JSON.stringify(data, null, options.readable ? 2 : 0);
 
-    if (!jsonString) {
-      throw new Error("Data is not serializable to JSON");
-    }
+    if (!jsonString) throw new Error("Data is not serializable to JSON");
 
     await writeFile(absolutePath, jsonString, "utf8");
 

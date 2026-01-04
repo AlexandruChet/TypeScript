@@ -5,31 +5,28 @@ export enum LogLevel {
 }
 
 export interface ILogger {
-  warn(arg0: string, arg1: { id: number }): unknown;
   info(message: string, data?: unknown): void;
+  warn(message: string, data?: unknown): void;
   error(message: string, data?: unknown): void;
 }
 
 export class Logger implements ILogger {
-  constructor(private readonly name: string) {}
+  constructor(private readonly context: string) {}
 
-  private log(level: LogLevel, message: string, data?: unknown): void {
+  private format(level: LogLevel, message: string): string {
     const timestamp = new Date().toISOString();
-    const base = `[${timestamp}] [${level}] [${this.name}]`;
-
-    if (data !== undefined) console.log(`${base} ${message}`, data);
-    else console.log(`${base} ${message}`);
+    return `[${timestamp}] [${level}] [${this.context}] ${message}`;
   }
 
   info(message: string, data?: unknown): void {
-    this.log(LogLevel.INFO, message, data);
+    console.info(this.format(LogLevel.INFO, message), data ?? '');
   }
 
   warn(message: string, data?: unknown): void {
-    this.log(LogLevel.WARN, message, data);
+    console.warn(this.format(LogLevel.WARN, message), data ?? '');
   }
 
-  error(message: string, data?: unknown): void {
-    this.log(LogLevel.ERROR, message, data);
+  error(message: string, data?: unknown): void { 
+    console.error(this.format(LogLevel.ERROR, message), data ?? '');
   }
 }
