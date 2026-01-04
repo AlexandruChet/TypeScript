@@ -1,11 +1,12 @@
 import readline from "node:readline";
 import { User } from "./user-types";
 import { users } from "./user-repository";
+import { saveToJson } from "./save";
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
-  prompt: "admin> "
+  prompt: "admin> ",
 });
 
 export function ADMIN_command_manager(): void {
@@ -21,7 +22,8 @@ function handleInput(line: string): void {
   const [command, ...args] = line.trim().split(" ");
 
   const handler = commands[command];
-  if (!handler) console.log("Unknown command. Type 'help' to see available commands.");
+  if (!handler)
+    console.log("Unknown command. Type 'help' to see available commands.");
   else handler(args);
 
   rl.prompt();
@@ -36,6 +38,7 @@ const commands: Record<string, CommandHandler> = {
   list: handleList,
   stats: handleStats,
   help: handleHelp,
+  save: handleSave,
   exit: () => rl.close(),
 };
 
@@ -108,4 +111,8 @@ Available commands:
  help                    Show this help
  exit                    Exit program
 `);
+}
+
+function handleSave() {
+  saveToJson("storage/users.json", users);
 }
