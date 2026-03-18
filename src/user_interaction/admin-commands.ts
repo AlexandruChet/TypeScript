@@ -9,7 +9,23 @@ const rl = readline.createInterface({
   prompt: "admin> ",
 });
 
-export function ADMIN_command_manager(): void {
+const askQuestion = (query: string): Promise<string> => new Promise((resolve) => rl.question(query, resolve));
+
+export async function ADMIN_command_manager(): Promise<void>{
+  const name = await askQuestion("Enter admin name: ");
+  const password = await askQuestion("Enter password: ");
+
+  const admin = users.find(
+    (u) =>
+      u.role === "ADMIN" && u.name === name && u.adminPassword === password,
+  );
+
+  if (!admin) {
+    console.error("Error: Invalid username or password. Access denied");
+    rl.close();
+    return;
+  }
+
   rl.prompt();
 
   rl.on("line", handleInput).on("close", () => {
@@ -18,15 +34,20 @@ export function ADMIN_command_manager(): void {
   });
 }
 
+function isAdminHelper(user: User): user is Extract<User, { role: "ADMIN" }> {
+  return user.role === "ADMIN";
+}
+
 function handleInput(line: string): void {
   const [command, ...args] = line.trim().split(" ");
   const handler = commands[command];
-  if (!handler) console.log("Unknown command. Type 'help' to see available commands.");
+  if (!handler)
+    console.log("Unknown command. Type 'help' to see available commands.");
   else handler(args);
   rl.prompt();
 }
 
-type CommandHandler = (args: string[]) => void;
+type CommandHandler<T = string[]> = (args: T) => void;
 
 const commands: Record<string, CommandHandler> = {
   block: ([id]) => handleBlock(Number(id)),
@@ -42,12 +63,13 @@ const commands: Record<string, CommandHandler> = {
 };
 
 function getUserById(id: number): User | null {
-  if (Number.isNaN(id)) {
+  const parseId = Number(id);
+  if (!Number.isInteger(parseId)) {
     console.log("Invalid user ID");
     return null;
   }
 
-  const user = users.find((e) => e.id === id);
+  const user = users.find((e) => e.id === parseId);
   if (!user) {
     console.log(`User with ID ${id} not found`);
     return null;
@@ -59,7 +81,12 @@ function getUserById(id: number): User | null {
 function handleBlock(id: number): void {
   const user = getUserById(id);
   if (!user) return;
-  if (user.role !== "ADMIN") return console.log("Only admins can use this command");
+  if (!isAdminHelper(user))
+    return console.log("Only admins can use this command");
+  if (user.warnings === "ADMIN WARNING")
+    return console.log(
+      "Admins with warnings can only use commands after the warning is removed",
+    );
   if (user.isBlocked) return console.log("This user is already blocked");
   snapshot();
   user.isBlocked = true;
@@ -95,7 +122,7 @@ function handleList([filter]: string[] = []): void {
     console.log(
       `${e.id} | ${e.name} | ${e.isBlocked ? "Blocked" : "Active"} | Notes: ${
         e.notes.join(", ") || "—"
-      }`
+      }`,
     );
   });
 }
@@ -133,7 +160,7 @@ function undo() {
   users.length = 0;
   users.push(...prev);
   saveToJson("storage/users.json", users);
-  console.log("Last action reserved");
+  console.log("reserved");
 }
 
 function handleHelp(): void {

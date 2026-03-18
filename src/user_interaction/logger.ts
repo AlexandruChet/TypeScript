@@ -18,7 +18,7 @@ export class Logger implements ILogger {
     return `[${timestamp}] [${level}] [${this.context}] ${message}`;
   }
 
-  info(message: string, data?: unknown): void {
+  info<T>(message: string, data?: T): void {
     console.info(this.format(LogLevel.INFO, message), data ?? '');
   }
 
