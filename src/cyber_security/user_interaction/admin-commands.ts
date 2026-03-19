@@ -53,10 +53,10 @@ const commands: Record<string, CommandHandler> = {
   block: ([id]) => handleBlock(Number(id)),
   unblock: ([id]) => handleUnblock(Number(id)),
   note: ([id, ...text]) => handleNote(Number(id), text.join(" ")),
-  list: handleList,
-  stats: handleStats,
-  help: handleHelp,
-  save: persist,
+  list: (args) => handleList(args),
+  stats: () => handleStats(),
+  help: () => handleHelp(),
+  save: () => persist(),
   delete: ([id]) => handleDelete(Number(id)),
   undo: () => undo(),
   exit: () => rl.close(),
@@ -64,12 +64,19 @@ const commands: Record<string, CommandHandler> = {
 
 function getUserById(id: number): User | null {
   const parseId = Number(id);
+
   if (!Number.isInteger(parseId)) {
     console.log("Invalid user ID");
     return null;
   }
 
+  if (isNaN(id)) {
+    console.log("Error: Please provide a valid numeric ID.");
+    return null;
+  }
+
   const user = users.find((e) => e.id === parseId);
+
   if (!user) {
     console.log(`User with ID ${id} not found`);
     return null;
@@ -81,12 +88,7 @@ function getUserById(id: number): User | null {
 function handleBlock(id: number): void {
   const user = getUserById(id);
   if (!user) return;
-  if (!isAdminHelper(user))
-    return console.log("Only admins can use this command");
-  if (user.warnings === "ADMIN WARNING")
-    return console.log(
-      "Admins with warnings can only use commands after the warning is removed",
-    );
+  if (isAdminHelper(user)) return console.log("Error: Administrators cannot be blocked.");
   if (user.isBlocked) return console.log("This user is already blocked");
   snapshot();
   user.isBlocked = true;
